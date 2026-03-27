@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from flasgger import Swagger
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -17,14 +19,14 @@ swagger_template = {
         "description": "API para autenticacion JWT y analisis de scraping de ScrapGuide.",
         "version": "0.1.0",
     },
-    "schemes": ["http"],
+    "schemes": ["https", "http"],
 }
 
 Swagger(app, template=swagger_template)
 
 CORS(
     app,
-    resources={r"/*": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"]}},
+    resources={r"/*": {"origins": ["https://scrap-guide-frontend-uyq9.vercel.app/"]}},
     supports_credentials=True,
 )
 
@@ -41,4 +43,8 @@ def health() -> tuple[dict[str, str], int]:
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 8000)),
+        debug=os.environ.get("FLASK_DEBUG", "0") == "1",
+    )
