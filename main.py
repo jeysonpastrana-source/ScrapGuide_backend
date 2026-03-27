@@ -34,20 +34,18 @@ CORS(
     supports_credentials=True,
 )
 
-# 🔥 FIX CORS PRE-FLIGHT (IMPORTANTE)
+# 🔥 FIX preflight
 @app.before_request
 def handle_options():
     if request.method == "OPTIONS":
         return "", 200
 
-# 🔥 FIX ERROR 502 (no bloquear app)
-@app.before_first_request
-def setup_db():
-    try:
-        init_db()
-        print("✅ DB inicializada correctamente")
-    except Exception as e:
-        print("❌ Error DB:", e)
+# 🔥 INIT DB (compatible con Flask 3)
+try:
+    init_db()
+    print("✅ DB inicializada")
+except Exception as e:
+    print("❌ DB error:", e)
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(analyzer_bp)
@@ -58,7 +56,7 @@ def health():
     return jsonify({"status": "ok"}), 200
 
 
-# 🔥 DEBUG GLOBAL (te salva la vida en Railway)
+# 🔥 DEBUG GLOBAL
 @app.errorhandler(Exception)
 def handle_error(e):
     print("🔥 ERROR:", e)
