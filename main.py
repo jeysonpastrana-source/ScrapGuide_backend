@@ -28,7 +28,7 @@ CORS(
     app,
     resources={
         r"/*": {
-            "origins": ["https://scrap-guide-frontend-uyq9.vercel.app"]
+            "origins": ["https://scrap-guide-frontend.vercel.app"]
         }
     },
     supports_credentials=True,
