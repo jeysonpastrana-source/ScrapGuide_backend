@@ -1,24 +1,38 @@
 from __future__ import annotations
 
+import os
+import time
 from contextlib import contextmanager
 from typing import Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from app.config import DATABASE_URL
+
+# ✅ Obtener URL desde Railway
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# ✅ Fix típico de Railway (postgres:// → postgresql://)
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 
 class Base(DeclarativeBase):
     pass
 
 
-engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True)
+# ✅ engine con configs útiles en producción
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
+)
+
 SessionLocal = sessionmaker(
     bind=engine,
     autoflush=False,
     autocommit=False,
-    future=True,
     expire_on_commit=False,
 )
 
@@ -36,8 +50,17 @@ def get_session() -> Iterator[Session]:
         session.close()
 
 
-def init_db() -> None:
-    # Import models before creating tables so metadata is fully registered.
-    from app import models  # noqa: F401
+# 🔥 IMPORTANTE: retry para Railway (la DB tarda en levantar)
+def init_db(retries: int = 5, delay: int = 2) -> None:
+    from app import models  # noqa
 
-    Base.metadata.create_all(bind=engine)
+    for attempt in range(retries):
+        try:
+            Base.metadata.create_all(bind=engine)
+            print("✅ DB conectada y tablas creadas")
+            return
+        except Exception as e:
+            print(f"⏳ Esperando DB... intento {attempt + 1}")
+            time.sleep(delay)
+
+    raise Exception("❌ No se pudo conectar a la DB después de varios intentos")
