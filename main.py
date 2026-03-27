@@ -26,7 +26,7 @@ Swagger(app, template=swagger_template)
 
 CORS(
     app,
-    resources={r"/*": {"origins": ["https://scrap-guide-frontend-uyq9.vercel.app/"]}},
+    resources={r"/*": {"origins": ["https://scrap-guide-frontend-uyq9.vercel.app"]}},
     supports_credentials=True,
 )
 
